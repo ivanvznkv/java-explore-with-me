@@ -18,6 +18,8 @@ import java.util.List;
 
 @Service
 public class StatsClient {
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     private final RestTemplate rest;
     private final String serverUrl;
 
@@ -33,9 +35,8 @@ public class StatsClient {
     }
 
     public List<ViewStats> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        String startStr = URLEncoder.encode(start.format(formatter), StandardCharsets.UTF_8);
-        String endStr = URLEncoder.encode(end.format(formatter), StandardCharsets.UTF_8);
+        String startStr = URLEncoder.encode(start.format(DATE_TIME_FORMATTER), StandardCharsets.UTF_8);
+        String endStr = URLEncoder.encode(end.format(DATE_TIME_FORMATTER), StandardCharsets.UTF_8);
 
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(serverUrl + "/stats")
                 .queryParam("start", startStr)

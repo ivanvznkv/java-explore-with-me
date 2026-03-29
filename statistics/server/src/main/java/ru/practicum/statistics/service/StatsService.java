@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.statistics.dto.EndpointHit;
 import ru.practicum.statistics.dto.ViewStats;
+import ru.practicum.statistics.mapper.HitMapper;
 import ru.practicum.statistics.model.HitEntity;
 import ru.practicum.statistics.repository.HitRepository;
 
@@ -19,11 +20,7 @@ public class StatsService {
 
     @Transactional
     public void saveHit(EndpointHit hit) {
-        HitEntity entity = new HitEntity();
-        entity.setApp(hit.getApp());
-        entity.setUri(hit.getUri());
-        entity.setIp(hit.getIp());
-        entity.setTimestamp(hit.getTimestamp());
+        HitEntity entity = HitMapper.toEntity(hit);
         hitRepository.save(entity);
     }
 

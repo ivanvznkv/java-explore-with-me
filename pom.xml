@@ -26,6 +26,7 @@
 		<module>statistics/dto</module>
 		<module>statistics/client</module>
 		<module>statistics/server</module>
+		<module>ewm-service</module>
 	</modules>
 
 	<build>
