@@ -7,12 +7,13 @@ import ru.practicum.ewm.request.model.RequestStatus;
 import ru.practicum.ewm.user.model.User;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 public class RequestMapper {
 
     public static Request toRequest(Event event, User requester) {
         Request request = new Request();
-        request.setCreated(LocalDateTime.now());
+        request.setCreated(LocalDateTime.now().truncatedTo(ChronoUnit.MICROS));
         request.setEvent(event);
         request.setRequester(requester);
         request.setStatus(RequestStatus.PENDING);

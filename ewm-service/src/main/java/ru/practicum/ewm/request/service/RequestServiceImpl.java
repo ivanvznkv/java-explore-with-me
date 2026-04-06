@@ -120,13 +120,11 @@ public class RequestServiceImpl implements RequestService {
             }
             if (update.getStatus().equals("CONFIRMED")) {
                 if (limit > 0 && confirmedNow >= limit) {
-                    req.setStatus(RequestStatus.REJECTED);
-                    rejected.add(RequestMapper.toDto(req));
-                } else {
-                    req.setStatus(RequestStatus.CONFIRMED);
-                    confirmed.add(RequestMapper.toDto(req));
-                    confirmedNow++;
+                    throw new ConflictException("Достигнут лимит участников");
                 }
+                req.setStatus(RequestStatus.CONFIRMED);
+                confirmed.add(RequestMapper.toDto(req));
+                confirmedNow++;
             } else if (update.getStatus().equals("REJECTED")) {
                 req.setStatus(RequestStatus.REJECTED);
                 rejected.add(RequestMapper.toDto(req));
@@ -134,6 +132,7 @@ public class RequestServiceImpl implements RequestService {
                 throw new IllegalArgumentException("Некорректный статус");
             }
         }
+
         requestRepository.saveAll(requests);
         return new EventRequestStatusUpdateResult(confirmed, rejected);
     }

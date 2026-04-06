@@ -1,8 +1,10 @@
 package ru.practicum.ewm.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -49,5 +51,26 @@ public class ErrorHandler {
                 .message(message)
                 .timestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                 .build();
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleMissingParams(MissingServletRequestParameterException e) {
+        log.error("400 {}", e.getMessage());
+        return buildApiError(HttpStatus.BAD_REQUEST, "Отсутствует обязательный параметр", e.getMessage());
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleConstraintViolation(ConstraintViolationException e) {
+        log.error("400 {}", e.getMessage());
+        return buildApiError(HttpStatus.BAD_REQUEST, "Некорректное значение параметра", e.getMessage());
+    }
+
+    @ExceptionHandler(ArithmeticException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleArithmetic(ArithmeticException e) {
+        log.error("400 {}", e.getMessage());
+        return buildApiError(HttpStatus.BAD_REQUEST, "Некорректные параметры пагинации", e.getMessage());
     }
 }

@@ -33,7 +33,10 @@ public class CompilationServiceImpl implements CompilationService {
         Set<Event> events = (dto.getEvents() == null) ? Set.of() : Set.copyOf(eventRepository.findAllById(dto.getEvents()));
         Compilation compilation = CompilationMapper.toCompilation(dto, events);
         compilation = compilationRepository.save(compilation);
-        return CompilationMapper.toCompilationDto(compilation);
+        Set<EventShortDto> eventShortDtos = events.stream()
+                .map(event -> EventMapper.toEventShortDto(event, 0L, 0L))
+                .collect(Collectors.toSet());
+        return CompilationMapper.toCompilationDto(compilation, eventShortDtos);
     }
 
     @Override
@@ -47,12 +50,16 @@ public class CompilationServiceImpl implements CompilationService {
         if (request.getPinned() != null) {
             compilation.setPinned(request.getPinned());
         }
+        Set<Event> events = compilation.getEvents();
         if (request.getEvents() != null) {
-            Set<Event> events = Set.copyOf(eventRepository.findAllById(request.getEvents()));
+            events = Set.copyOf(eventRepository.findAllById(request.getEvents()));
             compilation.setEvents(events);
         }
         compilation = compilationRepository.save(compilation);
-        return CompilationMapper.toCompilationDto(compilation);
+        Set<EventShortDto> eventShortDtos = events.stream()
+                .map(event -> EventMapper.toEventShortDto(event, 0L, 0L))
+                .collect(Collectors.toSet());
+        return CompilationMapper.toCompilationDto(compilation, eventShortDtos);
     }
 
     @Override

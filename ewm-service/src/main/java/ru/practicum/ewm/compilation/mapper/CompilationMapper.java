@@ -31,13 +31,4 @@ public class CompilationMapper {
                 compilation.getTitle()
         );
     }
-
-    public static CompilationDto toCompilationDto(Compilation compilation) {
-        return new CompilationDto(
-                compilation.getId(),
-                null,
-                compilation.getPinned(),
-                compilation.getTitle()
-        );
-    }
 }

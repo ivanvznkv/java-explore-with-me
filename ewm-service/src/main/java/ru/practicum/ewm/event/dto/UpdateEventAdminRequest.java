@@ -2,6 +2,7 @@ package ru.practicum.ewm.event.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import ru.practicum.ewm.event.model.Location;
@@ -25,6 +26,8 @@ public class UpdateEventAdminRequest {
     private Location location;
 
     private Boolean paid;
+
+    @Min(0)
     private Integer participantLimit;
     private Boolean requestModeration;
 

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import ru.practicum.ewm.event.model.Location;
+import jakarta.validation.constraints.Min;
 
 import java.time.LocalDateTime;
 
@@ -25,6 +26,8 @@ public class UpdateEventUserRequest {
     private Location location;
 
     private Boolean paid;
+
+    @Min(0)
     private Integer participantLimit;
     private Boolean requestModeration;
 

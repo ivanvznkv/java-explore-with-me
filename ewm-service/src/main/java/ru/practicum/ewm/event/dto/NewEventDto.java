@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import ru.practicum.ewm.event.model.Location;
+import jakarta.validation.constraints.Min;
 
 import java.time.LocalDateTime;
 
@@ -29,6 +30,8 @@ public class NewEventDto {
     private Location location;
 
     private Boolean paid;
+
+    @Min(0)
     private Integer participantLimit;
     private Boolean requestModeration;
 
