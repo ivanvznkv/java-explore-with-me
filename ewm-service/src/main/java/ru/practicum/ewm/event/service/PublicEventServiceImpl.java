@@ -20,7 +20,6 @@ import ru.practicum.statistics.dto.EndpointHit;
 import ru.practicum.statistics.dto.ViewStats;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,15 +30,19 @@ public class PublicEventServiceImpl implements PublicEventService {
     private final EventRepository eventRepository;
     private final StatsClient statsClient;
 
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private static final LocalDateTime STATS_START = LocalDateTime.of(2000, 1, 1, 0, 0, 0);
-
     @Override
     @Transactional(readOnly = true)
     public List<EventShortDto> getEvents(String text, List<Long> categories, Boolean paid,
                                          LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                          Boolean onlyAvailable, SortType sort,
                                          int from, int size, HttpServletRequest request) {
+        if (size <= 0) {
+            size = 10;
+        }
+        if (from < 0) {
+            from = 0;
+        }
+
         sendHit(request);
 
         LocalDateTime now = LocalDateTime.now();
@@ -119,7 +122,7 @@ public class PublicEventServiceImpl implements PublicEventService {
                 .collect(Collectors.toList());
         try {
             LocalDateTime start = LocalDateTime.of(2000, 1, 1, 0, 0, 0);
-            LocalDateTime end = LocalDateTime.now().plusSeconds(10);
+            LocalDateTime end = LocalDateTime.now().plusMinutes(5);
             List<ViewStats> stats = statsClient.getStats(start, end, uris, false);
             return stats.stream()
                     .collect(Collectors.toMap(
