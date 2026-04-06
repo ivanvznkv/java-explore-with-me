@@ -38,6 +38,7 @@ public class CompilationServiceImpl implements CompilationService {
                 .collect(Collectors.toSet());
         return CompilationMapper.toCompilationDto(compilation, eventShortDtos);
     }
+
     @Override
     @Transactional
     public CompilationDto updateCompilation(Long compId, UpdateCompilationRequest request) {
