@@ -30,8 +30,19 @@ public class AdminEventServiceImpl implements AdminEventService {
     @Transactional(readOnly = true)
     public List<EventFullDto> getEvents(List<Long> users, List<EventState> states, List<Long> categories,
                                         LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size) {
+        if (size <= 0) {
+            size = 10;
+        }
+        if (from < 0) {
+            from = 0;
+        }
+
+        LocalDateTime start = (rangeStart != null) ? rangeStart : LocalDateTime.of(1970, 1, 1, 0, 0, 0);
+        LocalDateTime end = (rangeEnd != null) ? rangeEnd : LocalDateTime.of(3000, 1, 1, 0, 0, 0);
+
         PageRequest page = PageRequest.of(from / size, size);
-        Page<Event> eventsPage = eventRepository.findAllByAdminFilters(users, states, categories, rangeStart, rangeEnd, page);
+        Page<Event> eventsPage = eventRepository.findAllByAdminFilters(users, states, categories, start, end, page);
+
         return eventsPage.stream()
                 .map(event -> EventMapper.toEventFullDto(event, 0L, eventRepository.countConfirmedRequests(event.getId())))
                 .collect(Collectors.toList());

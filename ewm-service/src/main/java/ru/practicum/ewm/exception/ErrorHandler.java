@@ -8,6 +8,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -72,5 +73,13 @@ public class ErrorHandler {
     public ApiError handleArithmetic(ArithmeticException e) {
         log.error("400 {}", e.getMessage());
         return buildApiError(HttpStatus.BAD_REQUEST, "Некорректные параметры пагинации", e.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException e) {
+        log.error("400 {}", e.getMessage());
+        return buildApiError(HttpStatus.BAD_REQUEST, "Некорректное значение параметра",
+                "Параметр '" + e.getName() + "' имеет неверный тип");
     }
 }

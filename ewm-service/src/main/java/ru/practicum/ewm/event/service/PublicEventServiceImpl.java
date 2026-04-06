@@ -106,6 +106,7 @@ public class PublicEventServiceImpl implements PublicEventService {
             hit.setIp(request.getRemoteAddr());
             hit.setTimestamp(LocalDateTime.now());
             statsClient.sendHit(hit);
+            log.info("Хит отправлен: {} {}", hit.getUri(), hit.getIp());
         } catch (Exception e) {
             log.error("Ошибка при отправке статистики: {}", e.getMessage());
         }
@@ -117,7 +118,9 @@ public class PublicEventServiceImpl implements PublicEventService {
                 .map(event -> "/events/" + event.getId())
                 .collect(Collectors.toList());
         try {
-            List<ViewStats> stats = statsClient.getStats(STATS_START, LocalDateTime.now().plusDays(1), uris, false);
+            LocalDateTime start = LocalDateTime.of(2000, 1, 1, 0, 0, 0);
+            LocalDateTime end = LocalDateTime.now().plusSeconds(10);
+            List<ViewStats> stats = statsClient.getStats(start, end, uris, false);
             return stats.stream()
                     .collect(Collectors.toMap(
                             vs -> Long.parseLong(vs.getUri().substring(vs.getUri().lastIndexOf('/') + 1)),

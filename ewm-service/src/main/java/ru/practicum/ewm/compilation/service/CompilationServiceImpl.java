@@ -50,13 +50,12 @@ public class CompilationServiceImpl implements CompilationService {
         if (request.getPinned() != null) {
             compilation.setPinned(request.getPinned());
         }
-        Set<Event> events = compilation.getEvents();
-        if (request.getEvents() != null) {
-            events = Set.copyOf(eventRepository.findAllById(request.getEvents()));
+        if (request.getEvents() != null && !request.getEvents().isEmpty()) {
+            Set<Event> events = Set.copyOf(eventRepository.findAllById(request.getEvents()));
             compilation.setEvents(events);
         }
         compilation = compilationRepository.save(compilation);
-        Set<EventShortDto> eventShortDtos = events.stream()
+        Set<EventShortDto> eventShortDtos = compilation.getEvents().stream()
                 .map(event -> EventMapper.toEventShortDto(event, 0L, 0L))
                 .collect(Collectors.toSet());
         return CompilationMapper.toCompilationDto(compilation, eventShortDtos);
