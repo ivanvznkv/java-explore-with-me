@@ -38,7 +38,6 @@ public class CompilationServiceImpl implements CompilationService {
                 .collect(Collectors.toSet());
         return CompilationMapper.toCompilationDto(compilation, eventShortDtos);
     }
-
     @Override
     @Transactional
     public CompilationDto updateCompilation(Long compId, UpdateCompilationRequest request) {
@@ -55,11 +54,7 @@ public class CompilationServiceImpl implements CompilationService {
             compilation.setEvents(events);
         }
         compilation = compilationRepository.save(compilation);
-        Set<Event> events = compilation.getEvents();
-        if (events == null) {
-            events = Set.of();
-        }
-        Set<EventShortDto> eventShortDtos = events.stream()
+        Set<EventShortDto> eventShortDtos = compilation.getEvents().stream()
                 .map(event -> EventMapper.toEventShortDto(event, 0L, 0L))
                 .collect(Collectors.toSet());
         return CompilationMapper.toCompilationDto(compilation, eventShortDtos);

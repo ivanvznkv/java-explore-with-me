@@ -36,11 +36,11 @@ public class PublicEventServiceImpl implements PublicEventService {
                                          LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                          Boolean onlyAvailable, SortType sort,
                                          int from, int size, HttpServletRequest request) {
-        if (size <= 0) {
-            size = 10;
-        }
-        if (from < 0) {
-            from = 0;
+        if (size <= 0) size = 10;
+        if (from < 0) from = 0;
+
+        if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
+            throw new IllegalArgumentException("Дата начала не может быть позже даты окончания");
         }
 
         sendHit(request);
@@ -122,7 +122,7 @@ public class PublicEventServiceImpl implements PublicEventService {
                 .collect(Collectors.toList());
         try {
             LocalDateTime start = LocalDateTime.of(2000, 1, 1, 0, 0, 0);
-            LocalDateTime end = LocalDateTime.now().plusMinutes(5);
+            LocalDateTime end = LocalDateTime.now().plusDays(1);
             List<ViewStats> stats = statsClient.getStats(start, end, uris, false);
             return stats.stream()
                     .collect(Collectors.toMap(

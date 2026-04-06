@@ -17,6 +17,7 @@ public interface CompilationRepository extends JpaRepository<Compilation, Long> 
     @EntityGraph(attributePaths = {"events"})
     Page<Compilation> findByPinned(boolean pinned, Pageable pageable);
 
+    @Override
     @EntityGraph(attributePaths = {"events"})
     Optional<Compilation> findById(Long id);
 }
