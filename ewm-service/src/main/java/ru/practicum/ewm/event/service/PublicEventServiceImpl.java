@@ -90,6 +90,13 @@ public class PublicEventServiceImpl implements PublicEventService {
     @Transactional(readOnly = true)
     public EventFullDto getEvent(Long eventId, HttpServletRequest request) {
         sendHit(request);
+
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие с id=" + eventId + " не найдено"));
         if (event.getState() != EventState.PUBLISHED) {
