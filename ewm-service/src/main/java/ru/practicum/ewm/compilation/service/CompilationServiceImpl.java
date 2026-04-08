@@ -17,6 +17,7 @@ import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.exception.NotFoundException;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,7 +31,9 @@ public class CompilationServiceImpl implements CompilationService {
     @Override
     @Transactional
     public CompilationDto createCompilation(NewCompilationDto dto) {
-        Set<Event> events = (dto.getEvents() == null) ? Set.of() : Set.copyOf(eventRepository.findAllById(dto.getEvents()));
+        Set<Event> events = (dto.getEvents() == null)
+                ? new HashSet<>()
+                : new HashSet<>(eventRepository.findAllById(dto.getEvents()));
         Compilation compilation = CompilationMapper.toCompilation(dto, events);
         compilation = compilationRepository.save(compilation);
         Set<EventShortDto> eventShortDtos = events.stream()
@@ -51,7 +54,7 @@ public class CompilationServiceImpl implements CompilationService {
             compilation.setPinned(request.getPinned());
         }
         if (request.getEvents() != null && !request.getEvents().isEmpty()) {
-            Set<Event> events = Set.copyOf(eventRepository.findAllById(request.getEvents()));
+            Set<Event> events = new HashSet<>(eventRepository.findAllById(request.getEvents()));
             compilation.setEvents(events);
         }
         compilation = compilationRepository.save(compilation);
