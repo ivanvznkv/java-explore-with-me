@@ -3,8 +3,6 @@ package ru.practicum.ewm.event.service;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.event.dto.EventFullDto;
@@ -49,9 +47,8 @@ public class PublicEventServiceImpl implements PublicEventService {
         if (rangeStart == null) rangeStart = now;
         if (rangeEnd == null) rangeEnd = LocalDateTime.of(2999, 12, 31, 23, 59, 59);
 
-        Pageable pageable = PageRequest.of(from / size, size);
         List<Event> events = eventRepository.findPublishedEventsWithFilters(
-                text, categories, paid, rangeStart, rangeEnd, pageable);
+                text, categories, paid, rangeStart, rangeEnd, from, size);
 
         Map<Long, Long> confirmedRequestsMap = getConfirmedRequestsMap(events);
 

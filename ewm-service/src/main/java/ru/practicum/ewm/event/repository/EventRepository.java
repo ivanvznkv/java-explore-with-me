@@ -16,8 +16,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     boolean existsByCategoryId(Long categoryId);
 
-    Page<Event> findAllByInitiatorId(Long initiatorId, Pageable pageable);
-
     @Query("SELECT DISTINCT e FROM Event e " +
             "LEFT JOIN FETCH e.category " +
             "LEFT JOIN FETCH e.initiator " +
@@ -32,20 +30,23 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                                       @Param("rangeEnd") LocalDateTime rangeEnd,
                                       Pageable pageable);
 
-    @Query("SELECT DISTINCT e FROM Event e " +
-            "LEFT JOIN FETCH e.category " +
-            "LEFT JOIN FETCH e.initiator " +
+    @Query(value = "SELECT DISTINCT e.* FROM events e " +
+            "LEFT JOIN categories c ON c.id = e.category_id " +
+            "LEFT JOIN users u ON u.id = e.initiator_id " +
             "WHERE e.state = 'PUBLISHED' " +
-            "AND (:text IS NULL OR (LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%')) OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%')))) " +
-            "AND (:categories IS NULL OR e.category.id IN :categories) " +
+            "AND (:text IS NULL OR (LOWER(e.annotation::text) LIKE LOWER(CONCAT('%', :text, '%')) " +
+            "OR LOWER(e.description::text) LIKE LOWER(CONCAT('%', :text, '%')))) " +
+            "AND (:categories IS NULL OR e.category_id IN (:categories)) " +
             "AND (:paid IS NULL OR e.paid = :paid) " +
-            "AND e.eventDate BETWEEN :rangeStart AND :rangeEnd")
+            "AND e.event_date BETWEEN :rangeStart AND :rangeEnd " +
+            "OFFSET :offset ROWS FETCH NEXT :size ROWS ONLY", nativeQuery = true)
     List<Event> findPublishedEventsWithFilters(@Param("text") String text,
                                                @Param("categories") List<Long> categories,
                                                @Param("paid") Boolean paid,
                                                @Param("rangeStart") LocalDateTime rangeStart,
                                                @Param("rangeEnd") LocalDateTime rangeEnd,
-                                               Pageable pageable);
+                                               @Param("offset") int offset,
+                                               @Param("size") int size);
 
     @Query("SELECT COUNT(r) FROM Request r WHERE r.event.id = :eventId AND r.status = 'CONFIRMED'")
     Long countConfirmedRequests(@Param("eventId") Long eventId);
