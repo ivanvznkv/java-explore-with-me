@@ -35,8 +35,8 @@ public class StatsClient {
     }
 
     public List<ViewStats> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
-        String startStr = URLEncoder.encode(start.format(DATE_TIME_FORMATTER), StandardCharsets.UTF_8);
-        String endStr = URLEncoder.encode(end.format(DATE_TIME_FORMATTER), StandardCharsets.UTF_8);
+        String startStr = start.format(DATE_TIME_FORMATTER);
+        String endStr = end.format(DATE_TIME_FORMATTER);
 
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(serverUrl + "/stats")
                 .queryParam("start", startStr)

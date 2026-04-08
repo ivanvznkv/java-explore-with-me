@@ -123,7 +123,9 @@ public class PublicEventServiceImpl implements PublicEventService {
         try {
             LocalDateTime start = LocalDateTime.of(2000, 1, 1, 0, 0, 0);
             LocalDateTime end = LocalDateTime.now().plusDays(1);
+            log.info("Requesting stats: start={}, end={}, uris={}, unique={}", start, end, uris, false);
             List<ViewStats> stats = statsClient.getStats(start, end, uris, false);
+            log.info("Received stats: {}", stats);
             return stats.stream()
                     .collect(Collectors.toMap(
                             vs -> Long.parseLong(vs.getUri().substring(vs.getUri().lastIndexOf('/') + 1)),
