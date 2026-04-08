@@ -19,10 +19,10 @@ public class Event {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 2000)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String annotation;
 
-    @Column(nullable = false, length = 7000)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Column(name = "event_date", nullable = false)
@@ -47,7 +47,7 @@ public class Event {
     @Column(nullable = false, length = 20)
     private EventState state;
 
-    @Column(nullable = false, length = 120)
+    @Column(nullable = false, length = 120, columnDefinition = "VARCHAR(120)")
     private String title;
 
     private Long views;
