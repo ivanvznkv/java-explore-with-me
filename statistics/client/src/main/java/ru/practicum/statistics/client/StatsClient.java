@@ -9,8 +9,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import ru.practicum.statistics.dto.EndpointHit;
 import ru.practicum.statistics.dto.ViewStats;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
