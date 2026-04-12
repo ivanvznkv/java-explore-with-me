@@ -110,7 +110,7 @@ public class EventServiceImpl implements EventService {
         LocalDateTime start = params.getRangeStart();
         LocalDateTime end = params.getRangeEnd();
 
-        List<Event> events = eventRepository.findAllByAdminFilters(
+        List<Event> events = eventRepository.searchEventsAdmin(
                 params.getUsers(), params.getStates(), params.getCategories(),
                 start, end, from, size);
 
@@ -188,7 +188,7 @@ public class EventServiceImpl implements EventService {
 
         statsClient.sendHit(request);
 
-        List<Event> events = eventRepository.findPublishedEventsWithFilters(
+        List<Event> events = eventRepository.searchEventsPublic(
                 params.getText(), params.getCategories(), params.getPaid(),
                 rangeStart, rangeEnd, from, size);
 

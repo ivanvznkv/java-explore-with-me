@@ -23,13 +23,13 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             "AND e.event_date >= COALESCE(:rangeStart, '1900-01-01'::timestamp) " +
             "AND e.event_date <= COALESCE(:rangeEnd, '3000-01-01'::timestamp) " +
             "OFFSET :offset ROWS FETCH NEXT :size ROWS ONLY", nativeQuery = true)
-    List<Event> findAllByAdminFilters(@Param("users") List<Long> users,
-                                      @Param("states") List<String> states,
-                                      @Param("categories") List<Long> categories,
-                                      @Param("rangeStart") LocalDateTime rangeStart,
-                                      @Param("rangeEnd") LocalDateTime rangeEnd,
-                                      @Param("offset") int offset,
-                                      @Param("size") int size);
+    List<Event> searchEventsAdmin(@Param("users") List<Long> users,
+                                  @Param("states") List<String> states,
+                                  @Param("categories") List<Long> categories,
+                                  @Param("rangeStart") LocalDateTime rangeStart,
+                                  @Param("rangeEnd") LocalDateTime rangeEnd,
+                                  @Param("offset") int offset,
+                                  @Param("size") int size);
 
     @Query(value = "SELECT DISTINCT e.* FROM events e " +
             "LEFT JOIN categories c ON c.id = e.category_id " +
@@ -43,13 +43,13 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             "AND e.event_date >= COALESCE(:rangeStart, '1900-01-01'::timestamp) " +
             "AND e.event_date <= COALESCE(:rangeEnd, '3000-01-01'::timestamp) " +
             "OFFSET :offset ROWS FETCH NEXT :size ROWS ONLY", nativeQuery = true)
-    List<Event> findPublishedEventsWithFilters(@Param("text") String text,
-                                               @Param("categories") List<Long> categories,
-                                               @Param("paid") Boolean paid,
-                                               @Param("rangeStart") LocalDateTime rangeStart,
-                                               @Param("rangeEnd") LocalDateTime rangeEnd,
-                                               @Param("offset") int offset,
-                                               @Param("size") int size);
+    List<Event> searchEventsPublic(@Param("text") String text,
+                                   @Param("categories") List<Long> categories,
+                                   @Param("paid") Boolean paid,
+                                   @Param("rangeStart") LocalDateTime rangeStart,
+                                   @Param("rangeEnd") LocalDateTime rangeEnd,
+                                   @Param("offset") int offset,
+                                   @Param("size") int size);
 
     @Query("SELECT COUNT(r) FROM Request r WHERE r.event.id = :eventId AND r.status = 'CONFIRMED'")
     Long countConfirmedRequests(@Param("eventId") Long eventId);
