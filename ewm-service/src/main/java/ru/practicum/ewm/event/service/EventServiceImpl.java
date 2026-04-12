@@ -55,8 +55,8 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public List<EventShortDto> getUserEvents(Long userId, int from, int size) {
         PageRequest page = PageRequest.of(from / size, size);
-        var eventsPage = eventRepository.findAllByInitiatorIdWithDetails(userId, page);
-        return eventsPage.getContent().stream()
+        List<Event> events = eventRepository.findAllByInitiatorIdWithDetails(userId, page);
+        return events.stream()
                 .map(event -> EventMapper.toEventShortDto(event, 0L, 0L))
                 .collect(Collectors.toList());
     }
@@ -110,7 +110,7 @@ public class EventServiceImpl implements EventService {
         LocalDateTime start = params.getRangeStart();
         LocalDateTime end = params.getRangeEnd();
 
-        List<Event> events = eventRepository.findAllByAdminFiltersNative(
+        List<Event> events = eventRepository.findAllByAdminFilters(
                 params.getUsers(), params.getStates(), params.getCategories(),
                 start, end, from, size);
 
@@ -188,7 +188,7 @@ public class EventServiceImpl implements EventService {
 
         statsClient.sendHit(request);
 
-        List<Event> events = eventRepository.findPublishedEventsWithFiltersNative(
+        List<Event> events = eventRepository.findPublishedEventsWithFilters(
                 params.getText(), params.getCategories(), params.getPaid(),
                 rangeStart, rangeEnd, from, size);
 

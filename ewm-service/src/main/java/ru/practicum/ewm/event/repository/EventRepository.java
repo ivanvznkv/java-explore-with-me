@@ -1,6 +1,5 @@
 package ru.practicum.ewm.event.repository;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -24,13 +23,13 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             "AND e.event_date >= COALESCE(:rangeStart, '1900-01-01'::timestamp) " +
             "AND e.event_date <= COALESCE(:rangeEnd, '3000-01-01'::timestamp) " +
             "OFFSET :offset ROWS FETCH NEXT :size ROWS ONLY", nativeQuery = true)
-    List<Event> findAllByAdminFiltersNative(@Param("users") List<Long> users,
-                                            @Param("states") List<String> states,
-                                            @Param("categories") List<Long> categories,
-                                            @Param("rangeStart") LocalDateTime rangeStart,
-                                            @Param("rangeEnd") LocalDateTime rangeEnd,
-                                            @Param("offset") int offset,
-                                            @Param("size") int size);
+    List<Event> findAllByAdminFilters(@Param("users") List<Long> users,
+                                      @Param("states") List<String> states,
+                                      @Param("categories") List<Long> categories,
+                                      @Param("rangeStart") LocalDateTime rangeStart,
+                                      @Param("rangeEnd") LocalDateTime rangeEnd,
+                                      @Param("offset") int offset,
+                                      @Param("size") int size);
 
     @Query(value = "SELECT DISTINCT e.* FROM events e " +
             "LEFT JOIN categories c ON c.id = e.category_id " +
@@ -44,13 +43,13 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             "AND e.event_date >= COALESCE(:rangeStart, '1900-01-01'::timestamp) " +
             "AND e.event_date <= COALESCE(:rangeEnd, '3000-01-01'::timestamp) " +
             "OFFSET :offset ROWS FETCH NEXT :size ROWS ONLY", nativeQuery = true)
-    List<Event> findPublishedEventsWithFiltersNative(@Param("text") String text,
-                                                     @Param("categories") List<Long> categories,
-                                                     @Param("paid") Boolean paid,
-                                                     @Param("rangeStart") LocalDateTime rangeStart,
-                                                     @Param("rangeEnd") LocalDateTime rangeEnd,
-                                                     @Param("offset") int offset,
-                                                     @Param("size") int size);
+    List<Event> findPublishedEventsWithFilters(@Param("text") String text,
+                                               @Param("categories") List<Long> categories,
+                                               @Param("paid") Boolean paid,
+                                               @Param("rangeStart") LocalDateTime rangeStart,
+                                               @Param("rangeEnd") LocalDateTime rangeEnd,
+                                               @Param("offset") int offset,
+                                               @Param("size") int size);
 
     @Query("SELECT COUNT(r) FROM Request r WHERE r.event.id = :eventId AND r.status = 'CONFIRMED'")
     Long countConfirmedRequests(@Param("eventId") Long eventId);
@@ -59,5 +58,5 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     Map<Long, Long> countConfirmedRequestsBatch(@Param("eventIds") List<Long> eventIds);
 
     @Query("SELECT e FROM Event e LEFT JOIN FETCH e.category LEFT JOIN FETCH e.initiator WHERE e.initiator.id = :initiatorId")
-    Page<Event> findAllByInitiatorIdWithDetails(@Param("initiatorId") Long initiatorId, Pageable pageable);
+    List<Event> findAllByInitiatorIdWithDetails(@Param("initiatorId") Long initiatorId, Pageable pageable);
 }
