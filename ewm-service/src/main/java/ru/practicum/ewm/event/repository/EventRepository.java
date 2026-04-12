@@ -16,36 +16,42 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     boolean existsByCategoryId(Long categoryId);
 
-    @Query("SELECT DISTINCT e FROM Event e " +
-            "LEFT JOIN FETCH e.category " +
-            "LEFT JOIN FETCH e.initiator " +
-            "WHERE (:users IS NULL OR e.initiator.id IN :users) " +
-            "AND (:states IS NULL OR e.state IN :states) " +
-            "AND (:categories IS NULL OR e.category.id IN :categories) " +
-            "AND (:rangeStart IS NULL OR e.eventDate >= :rangeStart) " +
-            "AND (:rangeEnd IS NULL OR e.eventDate <= :rangeEnd)")
-    Page<Event> findAllByAdminFilters(@Param("users") List<Long> users,
-                                      @Param("states") List<EventState> states,
-                                      @Param("categories") List<Long> categories,
-                                      @Param("rangeStart") LocalDateTime rangeStart,
-                                      @Param("rangeEnd") LocalDateTime rangeEnd,
-                                      Pageable pageable);
+    @Query(value = "SELECT DISTINCT e.* FROM events e " +
+            "LEFT JOIN categories c ON c.id = e.category_id " +
+            "LEFT JOIN users u ON u.id = e.initiator_id " +
+            "WHERE (COALESCE(cast(:users AS bigint[]), ARRAY[]::bigint[]) = ARRAY[]::bigint[] OR e.initiator_id IN (:users)) " +
+            "AND (COALESCE(cast(:states AS varchar[]), ARRAY[]::varchar[]) = ARRAY[]::varchar[] OR e.state IN (:states)) " +
+            "AND (COALESCE(cast(:categories AS bigint[]), ARRAY[]::bigint[]) = ARRAY[]::bigint[] OR e.category_id IN (:categories)) " +
+            "AND e.event_date >= COALESCE(:rangeStart, '1900-01-01'::timestamp) " +
+            "AND e.event_date <= COALESCE(:rangeEnd, '3000-01-01'::timestamp) " +
+            "OFFSET :offset ROWS FETCH NEXT :size ROWS ONLY", nativeQuery = true)
+    List<Event> findAllByAdminFiltersNative(@Param("users") List<Long> users,
+                                            @Param("states") List<String> states,
+                                            @Param("categories") List<Long> categories,
+                                            @Param("rangeStart") LocalDateTime rangeStart,
+                                            @Param("rangeEnd") LocalDateTime rangeEnd,
+                                            @Param("offset") int offset,
+                                            @Param("size") int size);
 
-    @Query("SELECT DISTINCT e FROM Event e " +
-            "LEFT JOIN FETCH e.category " +
-            "LEFT JOIN FETCH e.initiator " +
+    @Query(value = "SELECT DISTINCT e.* FROM events e " +
+            "LEFT JOIN categories c ON c.id = e.category_id " +
+            "LEFT JOIN users u ON u.id = e.initiator_id " +
             "WHERE e.state = 'PUBLISHED' " +
-            "AND (:text IS NULL OR LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%')) OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%'))) " +
-            "AND (:categories IS NULL OR e.category.id IN :categories) " +
+            "AND (COALESCE(:text, '') = '' OR " +
+            "     LOWER(e.annotation::text) LIKE LOWER(CONCAT('%', :text, '%')) OR " +
+            "     LOWER(e.description::text) LIKE LOWER(CONCAT('%', :text, '%'))) " +
+            "AND (COALESCE(cast(:categories AS bigint[]), ARRAY[]::bigint[]) = ARRAY[]::bigint[] OR e.category_id IN (:categories)) " +
             "AND (:paid IS NULL OR e.paid = :paid) " +
-            "AND (:rangeStart IS NULL OR e.eventDate >= :rangeStart) " +
-            "AND (:rangeEnd IS NULL OR e.eventDate <= :rangeEnd)")
-    Page<Event> findPublishedEventsWithFilters(@Param("text") String text,
-                                               @Param("categories") List<Long> categories,
-                                               @Param("paid") Boolean paid,
-                                               @Param("rangeStart") LocalDateTime rangeStart,
-                                               @Param("rangeEnd") LocalDateTime rangeEnd,
-                                               Pageable pageable);
+            "AND e.event_date >= COALESCE(:rangeStart, '1900-01-01'::timestamp) " +
+            "AND e.event_date <= COALESCE(:rangeEnd, '3000-01-01'::timestamp) " +
+            "OFFSET :offset ROWS FETCH NEXT :size ROWS ONLY", nativeQuery = true)
+    List<Event> findPublishedEventsWithFiltersNative(@Param("text") String text,
+                                                     @Param("categories") List<Long> categories,
+                                                     @Param("paid") Boolean paid,
+                                                     @Param("rangeStart") LocalDateTime rangeStart,
+                                                     @Param("rangeEnd") LocalDateTime rangeEnd,
+                                                     @Param("offset") int offset,
+                                                     @Param("size") int size);
 
     @Query("SELECT COUNT(r) FROM Request r WHERE r.event.id = :eventId AND r.status = 'CONFIRMED'")
     Long countConfirmedRequests(@Param("eventId") Long eventId);
@@ -53,9 +59,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     @Query("SELECT r.event.id, COUNT(r) FROM Request r WHERE r.event.id IN :eventIds AND r.status = 'CONFIRMED' GROUP BY r.event.id")
     Map<Long, Long> countConfirmedRequestsBatch(@Param("eventIds") List<Long> eventIds);
 
-    @Query("SELECT e FROM Event e " +
-            "LEFT JOIN FETCH e.category " +
-            "LEFT JOIN FETCH e.initiator " +
-            "WHERE e.initiator.id = :initiatorId")
+    @Query("SELECT e FROM Event e LEFT JOIN FETCH e.category LEFT JOIN FETCH e.initiator WHERE e.initiator.id = :initiatorId")
     Page<Event> findAllByInitiatorIdWithDetails(@Param("initiatorId") Long initiatorId, Pageable pageable);
 }

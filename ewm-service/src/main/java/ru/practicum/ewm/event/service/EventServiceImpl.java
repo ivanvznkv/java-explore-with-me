@@ -3,9 +3,7 @@ package ru.practicum.ewm.event.service;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.category.model.Category;
@@ -57,8 +55,8 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public List<EventShortDto> getUserEvents(Long userId, int from, int size) {
         PageRequest page = PageRequest.of(from / size, size);
-        List<Event> events = eventRepository.findAllByInitiatorIdWithDetails(userId, page).getContent();
-        return events.stream()
+        var eventsPage = eventRepository.findAllByInitiatorIdWithDetails(userId, page);
+        return eventsPage.getContent().stream()
                 .map(event -> EventMapper.toEventShortDto(event, 0L, 0L))
                 .collect(Collectors.toList());
     }
@@ -103,9 +101,6 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional(readOnly = true)
     public List<EventFullDto> getEventsForAdmin(AdminEventSearchParams params) {
-        List<EventState> stateEnums = (params.getStates() == null) ? null :
-                params.getStates().stream().map(EventState::valueOf).collect(Collectors.toList());
-
         int from = params.getFrom();
         int size = params.getSize();
         if (size <= 0 || from < 0) {
@@ -115,16 +110,14 @@ public class EventServiceImpl implements EventService {
         LocalDateTime start = params.getRangeStart();
         LocalDateTime end = params.getRangeEnd();
 
-        PageRequest page = PageRequest.of(from / size, size);
-        Page<Event> eventsPage = eventRepository.findAllByAdminFilters(
-                params.getUsers(), stateEnums, params.getCategories(), start, end, page);
+        List<Event> events = eventRepository.findAllByAdminFiltersNative(
+                params.getUsers(), params.getStates(), params.getCategories(),
+                start, end, from, size);
 
-        List<Long> eventIds = eventsPage.getContent().stream()
-                .map(Event::getId)
-                .collect(Collectors.toList());
+        List<Long> eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
         Map<Long, Long> confirmedRequestsMap = eventRepository.countConfirmedRequestsBatch(eventIds);
 
-        return eventsPage.stream()
+        return events.stream()
                 .map(event -> EventMapper.toEventFullDto(event, 0L, confirmedRequestsMap.getOrDefault(event.getId(), 0L)))
                 .collect(Collectors.toList());
     }
@@ -195,11 +188,9 @@ public class EventServiceImpl implements EventService {
 
         statsClient.sendHit(request);
 
-        Pageable pageable = PageRequest.of(from / size, size);
-        Page<Event> eventPage = eventRepository.findPublishedEventsWithFilters(
+        List<Event> events = eventRepository.findPublishedEventsWithFiltersNative(
                 params.getText(), params.getCategories(), params.getPaid(),
-                rangeStart, rangeEnd, pageable);
-        List<Event> events = eventPage.getContent();
+                rangeStart, rangeEnd, from, size);
 
         Map<Long, Long> confirmedRequestsMap = getConfirmedRequestsMap(events);
 
