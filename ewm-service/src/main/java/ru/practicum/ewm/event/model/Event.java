@@ -50,8 +50,6 @@ public class Event {
     @Column(nullable = false, length = 120, columnDefinition = "VARCHAR(120)")
     private String title;
 
-    private Long views;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;

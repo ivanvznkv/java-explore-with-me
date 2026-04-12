@@ -22,7 +22,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             "WHERE (:users IS NULL OR e.initiator.id IN :users) " +
             "AND (:states IS NULL OR e.state IN :states) " +
             "AND (:categories IS NULL OR e.category.id IN :categories) " +
-            "AND e.eventDate BETWEEN :rangeStart AND :rangeEnd")
+            "AND (:rangeStart IS NULL OR e.eventDate >= :rangeStart) " +
+            "AND (:rangeEnd IS NULL OR e.eventDate <= :rangeEnd)")
     Page<Event> findAllByAdminFilters(@Param("users") List<Long> users,
                                       @Param("states") List<EventState> states,
                                       @Param("categories") List<Long> categories,
@@ -38,7 +39,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             "OR LOWER(e.description::text) LIKE LOWER(CONCAT('%', :text, '%')))) " +
             "AND (:categories IS NULL OR e.category_id IN (:categories)) " +
             "AND (:paid IS NULL OR e.paid = :paid) " +
-            "AND e.event_date BETWEEN :rangeStart AND :rangeEnd " +
+            "AND (:rangeStart IS NULL OR e.event_date >= :rangeStart) " +
+            "AND (:rangeEnd IS NULL OR e.event_date <= :rangeEnd) " +
             "OFFSET :offset ROWS FETCH NEXT :size ROWS ONLY", nativeQuery = true)
     List<Event> findPublishedEventsWithFilters(@Param("text") String text,
                                                @Param("categories") List<Long> categories,

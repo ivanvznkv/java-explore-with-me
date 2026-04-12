@@ -2,6 +2,7 @@ package ru.practicum.ewm.exception;
 
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -81,5 +82,12 @@ public class ErrorHandler {
         log.error("400 {}", e.getMessage());
         return buildApiError(HttpStatus.BAD_REQUEST, "Некорректное значение параметра",
                 "Параметр '" + e.getName() + "' имеет неверный тип");
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleDataIntegrityViolation(DataIntegrityViolationException e) {
+        log.error("409 {}", e.getMessage());
+        return buildApiError(HttpStatus.CONFLICT, "Нарушение уникальности", e.getMessage());
     }
 }

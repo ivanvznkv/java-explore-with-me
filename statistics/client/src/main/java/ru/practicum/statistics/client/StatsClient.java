@@ -1,5 +1,6 @@
 package ru.practicum.statistics.client;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
@@ -20,16 +21,28 @@ public class StatsClient {
 
     private final RestTemplate rest;
     private final String serverUrl;
+    private final String appName;
 
     public StatsClient(@Value("${stats-server.url:http://localhost:9090}") String serverUrl,
+                       @Value("${stats.app-name:ewm-main-service}") String appName,
                        RestTemplateBuilder builder) {
         this.serverUrl = serverUrl;
+        this.appName = appName;
         this.rest = builder.build();
     }
 
     public void sendHit(EndpointHit hit) {
         HttpEntity<EndpointHit> requestEntity = new HttpEntity<>(hit);
         rest.exchange(serverUrl + "/hit", HttpMethod.POST, requestEntity, Void.class);
+    }
+
+    public void sendHit(HttpServletRequest request) {
+        EndpointHit hit = new EndpointHit();
+        hit.setApp(appName);
+        hit.setUri(request.getRequestURI());
+        hit.setIp(request.getRemoteAddr());
+        hit.setTimestamp(LocalDateTime.now());
+        sendHit(hit);
     }
 
     public List<ViewStats> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
