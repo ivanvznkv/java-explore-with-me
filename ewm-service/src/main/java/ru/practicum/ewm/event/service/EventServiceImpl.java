@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.category.model.Category;
@@ -194,9 +195,11 @@ public class EventServiceImpl implements EventService {
 
         statsClient.sendHit(request);
 
-        List<Event> events = eventRepository.findPublishedEventsWithFilters(
+        Pageable pageable = PageRequest.of(from / size, size);
+        Page<Event> eventPage = eventRepository.findPublishedEventsWithFilters(
                 params.getText(), params.getCategories(), params.getPaid(),
-                rangeStart, rangeEnd, from, size);
+                rangeStart, rangeEnd, pageable);
+        List<Event> events = eventPage.getContent();
 
         Map<Long, Long> confirmedRequestsMap = getConfirmedRequestsMap(events);
 
