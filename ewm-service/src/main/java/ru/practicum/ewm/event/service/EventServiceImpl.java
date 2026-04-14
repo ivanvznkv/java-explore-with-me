@@ -17,7 +17,6 @@ import ru.practicum.ewm.event.mapper.EventMapper;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.EventState;
 import ru.practicum.ewm.event.repository.EventRepository;
-import ru.practicum.ewm.event.repository.EventSpecifications;
 import ru.practicum.ewm.event.util.SortType;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
@@ -114,16 +113,15 @@ public class EventServiceImpl implements EventService {
         }
 
         Pageable pageable = PageRequest.of(from / size, size, Sort.by("id"));
+        Page<Event> page = eventRepository.searchEventsAdmin(
+                params.getUsers(),
+                params.getStates(),
+                params.getCategories(),
+                params.getRangeStart(),
+                params.getRangeEnd(),
+                pageable);
 
-        Specification<Event> spec = Specification
-                .where(EventSpecifications.hasInitiators(params.getUsers()))
-                .and(EventSpecifications.hasStates(params.getStates()))
-                .and(EventSpecifications.hasCategories(params.getCategories()))
-                .and(EventSpecifications.eventDateBetween(params.getRangeStart(), params.getRangeEnd()));
-
-        Page<Event> page = eventRepository.findAll(spec, pageable);
         List<Event> events = page.getContent();
-
         List<Long> eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
         Map<Long, Long> confirmedRequestsMap = eventRepository.countConfirmedRequestsBatch(eventIds);
 
@@ -199,19 +197,16 @@ public class EventServiceImpl implements EventService {
             log.warn("Не удалось отправить статистику: {}", e.getMessage());
         }
 
-        Sort sort = Sort.by("eventDate").ascending();
-        Pageable pageable = PageRequest.of(from / size, size, sort);
+        Pageable pageable = PageRequest.of(from / size, size, Sort.by("eventDate").ascending());
+        Page<Event> page = eventRepository.searchEventsPublic(
+                params.getText(),
+                params.getCategories(),
+                params.getPaid(),
+                params.getRangeStart(),
+                params.getRangeEnd(),
+                pageable);
 
-        Specification<Event> spec = Specification
-                .where(EventSpecifications.isPublished())
-                .and(EventSpecifications.textContains(params.getText()))
-                .and(EventSpecifications.hasCategories(params.getCategories()))
-                .and(EventSpecifications.paidEquals(params.getPaid()))
-                .and(EventSpecifications.eventDateBetween(params.getRangeStart(), params.getRangeEnd()));
-
-        Page<Event> page = eventRepository.findAll(spec, pageable);
         List<Event> events = page.getContent();
-
         Map<Long, Long> confirmedRequestsMap = getConfirmedRequestsMap(events);
 
         if (params.getOnlyAvailable()) {
@@ -232,15 +227,16 @@ public class EventServiceImpl implements EventService {
                         confirmedRequestsMap.getOrDefault(event.getId(), 0L)))
                 .collect(Collectors.toList());
 
-        SortType sortParam = params.getSort();
-        if (sortParam == SortType.VIEWS) {
+        SortType sort = params.getSort();
+        if (sort == SortType.VIEWS) {
             result.sort(Comparator.comparing(EventShortDto::getViews).reversed());
-        } else if (sortParam == SortType.EVENT_DATE) {
+        } else if (sort == SortType.EVENT_DATE) {
             result.sort(Comparator.comparing(EventShortDto::getEventDate));
         }
 
         return result;
     }
+
 
     @Override
     @Transactional(readOnly = true)
