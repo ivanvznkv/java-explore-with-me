@@ -2,6 +2,7 @@ package ru.practicum.ewm.user.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.exception.NotFoundException;
@@ -30,9 +31,10 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public List<UserDto> getUsers(List<Long> ids, int from, int size) {
-        PageRequest page = PageRequest.of(from / size, size);
+        int page = from / size;
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by("id"));
         if (ids == null || ids.isEmpty()) {
-            return userRepository.findAll(page).stream()
+            return userRepository.findAll(pageRequest).stream()
                     .map(UserMapper::toUserDto)
                     .collect(Collectors.toList());
         } else {

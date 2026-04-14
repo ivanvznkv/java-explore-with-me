@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.category.model.Category;
@@ -54,8 +55,9 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional(readOnly = true)
     public List<EventShortDto> getUserEvents(Long userId, int from, int size) {
-        PageRequest page = PageRequest.of(from / size, size);
-        List<Event> events = eventRepository.findAllByInitiatorIdWithDetails(userId, page);
+        int page = from / size;
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by("id"));
+        List<Event> events = eventRepository.findAllByInitiatorIdWithDetails(userId, pageRequest);
         return events.stream()
                 .map(event -> EventMapper.toEventShortDto(event, 0L, 0L))
                 .collect(Collectors.toList());
@@ -186,7 +188,11 @@ public class EventServiceImpl implements EventService {
         LocalDateTime rangeStart = params.getRangeStart();
         LocalDateTime rangeEnd = params.getRangeEnd();
 
-        statsClient.sendHit(request);
+        try {
+            statsClient.sendHit(request);
+        } catch (Exception e) {
+            log.warn("Не удалось отправить статистику: {}", e.getMessage());
+        }
 
         List<Event> events = eventRepository.searchEventsPublic(
                 params.getText(), params.getCategories(), params.getPaid(),
@@ -219,17 +225,18 @@ public class EventServiceImpl implements EventService {
             result.sort(Comparator.comparing(EventShortDto::getEventDate));
         }
 
-        if (sort == SortType.VIEWS) {
-            int endIndex = Math.min(from + size, result.size());
-            result = result.subList(from, endIndex);
-        }
         return result;
     }
 
     @Override
     @Transactional(readOnly = true)
     public EventFullDto getEventForPublic(Long eventId, HttpServletRequest request) {
-        statsClient.sendHit(request);
+        try {
+            statsClient.sendHit(request);
+        } catch (Exception e) {
+            log.warn("Не удалось отправить статистику: {}", e.getMessage());
+        }
+
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие с id=" + eventId + " не найдено"));
         if (event.getState() != EventState.PUBLISHED) {
@@ -259,7 +266,7 @@ public class EventServiceImpl implements EventService {
                 .collect(Collectors.toList());
 
         try {
-            List<ViewStats> stats = statsClient.getStats(start, end, uris, false);
+            List<ViewStats> stats = statsClient.getStats(start, end, uris, true);
             return stats.stream()
                     .collect(Collectors.toMap(
                             vs -> Long.parseLong(vs.getUri().substring(vs.getUri().lastIndexOf('/') + 1)),

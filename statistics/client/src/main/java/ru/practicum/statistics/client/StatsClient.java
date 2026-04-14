@@ -13,6 +13,7 @@ import ru.practicum.statistics.dto.ViewStats;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -60,6 +61,7 @@ public class StatsClient {
         }
 
         ResponseEntity<ViewStats[]> response = rest.getForEntity(builder.build().toUriString(), ViewStats[].class);
-        return Arrays.asList(response.getBody());
+        ViewStats[] body = response.getBody();
+        return body != null ? Arrays.asList(body) : Collections.emptyList();
     }
 }
