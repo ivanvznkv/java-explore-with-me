@@ -111,17 +111,10 @@ public class EventServiceImpl implements EventService {
             throw new IllegalArgumentException("Параметры from и size должны быть > 0");
         }
 
-        List<EventState> states = null;
-        if (params.getStates() != null && !params.getStates().isEmpty()) {
-            states = params.getStates().stream()
-                    .map(EventState::valueOf)
-                    .collect(Collectors.toList());
-        }
-
         Pageable pageable = PageRequest.of(from / size, size, Sort.by("id"));
         Page<Event> page = eventRepository.searchEventsAdmin(
                 params.getUsers(),
-                states,
+                params.getStates(),
                 params.getCategories(),
                 params.getRangeStart(),
                 params.getRangeEnd(),
