@@ -3,7 +3,9 @@ package ru.practicum.ewm.event.service;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -109,13 +111,16 @@ public class EventServiceImpl implements EventService {
             throw new IllegalArgumentException("Параметры from и size должны быть > 0");
         }
 
-        LocalDateTime start = params.getRangeStart();
-        LocalDateTime end = params.getRangeEnd();
+        Pageable pageable = PageRequest.of(from / size, size, Sort.by("id"));
+        Page<Event> page = eventRepository.searchEventsAdmin(
+                params.getUsers(),
+                params.getStates(),
+                params.getCategories(),
+                params.getRangeStart(),
+                params.getRangeEnd(),
+                pageable);
 
-        List<Event> events = eventRepository.searchEventsAdmin(
-                params.getUsers(), params.getStates(), params.getCategories(),
-                start, end, from, size);
-
+        List<Event> events = page.getContent();
         List<Long> eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
         Map<Long, Long> confirmedRequestsMap = eventRepository.countConfirmedRequestsBatch(eventIds);
 
@@ -185,19 +190,22 @@ public class EventServiceImpl implements EventService {
             throw new IllegalArgumentException("Параметры from и size должны быть > 0");
         }
 
-        LocalDateTime rangeStart = params.getRangeStart();
-        LocalDateTime rangeEnd = params.getRangeEnd();
-
         try {
             statsClient.sendHit(request);
         } catch (Exception e) {
             log.warn("Не удалось отправить статистику: {}", e.getMessage());
         }
 
-        List<Event> events = eventRepository.searchEventsPublic(
-                params.getText(), params.getCategories(), params.getPaid(),
-                rangeStart, rangeEnd, from, size);
+        Pageable pageable = PageRequest.of(from / size, size, Sort.by("eventDate").ascending());
+        Page<Event> page = eventRepository.searchEventsPublic(
+                params.getText(),
+                params.getCategories(),
+                params.getPaid(),
+                params.getRangeStart(),
+                params.getRangeEnd(),
+                pageable);
 
+        List<Event> events = page.getContent();
         Map<Long, Long> confirmedRequestsMap = getConfirmedRequestsMap(events);
 
         if (params.getOnlyAvailable()) {
