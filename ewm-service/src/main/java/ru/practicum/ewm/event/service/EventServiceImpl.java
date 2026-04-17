@@ -102,33 +102,6 @@ public class EventServiceImpl implements EventService {
         return EventMapper.toEventFullDto(event, 0L, 0L);
     }
 
-//    @Override
-//    @Transactional(readOnly = true)
-//    public List<EventFullDto> getEventsForAdmin(AdminEventSearchParams params) {
-//        int from = params.getFrom();
-//        int size = params.getSize();
-//        if (size <= 0 || from < 0) {
-//            throw new IllegalArgumentException("Параметры from и size должны быть > 0");
-//        }
-//
-//        Pageable pageable = PageRequest.of(from / size, size, Sort.by("id"));
-//        Page<Event> page = eventRepository.searchEventsAdmin(
-//                params.getUsers(),
-//                params.getStates(),
-//                params.getCategories(),
-//                params.getRangeStart(),
-//                params.getRangeEnd(),
-//                pageable);
-//
-//        List<Event> events = page.getContent();
-//        List<Long> eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
-//        Map<Long, Long> confirmedRequestsMap = eventRepository.countConfirmedRequestsBatch(eventIds);
-//
-//        return events.stream()
-//                .map(event -> EventMapper.toEventFullDto(event, 0L, confirmedRequestsMap.getOrDefault(event.getId(), 0L)))
-//                .collect(Collectors.toList());
-//    }
-
     @Override
     @Transactional(readOnly = true)
     public List<EventFullDto> getEventsForAdmin(AdminEventSearchParams params) {
@@ -138,18 +111,10 @@ public class EventServiceImpl implements EventService {
             throw new IllegalArgumentException("Параметры from и size должны быть > 0");
         }
 
-        // Преобразуем строки в enum
-        List<EventState> stateEnums = null;
-        if (params.getStates() != null && !params.getStates().isEmpty()) {
-            stateEnums = params.getStates().stream()
-                    .map(EventState::valueOf)
-                    .collect(Collectors.toList());
-        }
-
         Pageable pageable = PageRequest.of(from / size, size, Sort.by("id"));
         Page<Event> page = eventRepository.searchEventsAdmin(
                 params.getUsers(),
-                stateEnums,
+                params.getStates(),
                 params.getCategories(),
                 params.getRangeStart(),
                 params.getRangeEnd(),
