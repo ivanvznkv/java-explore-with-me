@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -19,13 +20,9 @@ import java.util.List;
 @RequestMapping("/admin/events")
 @RequiredArgsConstructor
 @Validated
+@Slf4j
 public class AdminEventController {
     private final EventService eventService;
-
-//    @GetMapping
-//    public List<EventFullDto> getEvents(@Valid @ModelAttribute AdminEventSearchParams params) {
-//        return eventService.getEventsForAdmin(params);
-//    }
 
     @GetMapping
     public List<EventFullDto> getEvents(@RequestParam(required = false) List<Long> users,
@@ -35,6 +32,9 @@ public class AdminEventController {
                                         @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
                                         @RequestParam(defaultValue = "0") @PositiveOrZero int from,
                                         @RequestParam(defaultValue = "10") @Positive int size) {
+        log.info("Admin getEvents called with users={}, states={}, categories={}, rangeStart={}, rangeEnd={}, from={}, size={}",
+                users, states, categories, rangeStart, rangeEnd, from, size);
+
         AdminEventSearchParams params = new AdminEventSearchParams();
         params.setUsers(users);
         params.setStates(states);

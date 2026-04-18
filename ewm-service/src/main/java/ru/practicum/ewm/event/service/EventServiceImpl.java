@@ -141,6 +141,39 @@ public class EventServiceImpl implements EventService {
         return EventMapper.toEventFullDto(event, 0L, 0L);
     }
 
+//    @Override
+//    @Transactional(readOnly = true)
+//    public List<EventFullDto> getEventsForAdmin(AdminEventSearchParams params) {
+//        int from = params.getFrom();
+//        int size = params.getSize();
+//        if (size <= 0 || from < 0) {
+//            throw new IllegalArgumentException("Параметры from и size должны быть > 0");
+//        }
+//        List<EventState> stateEnums = null;
+//        if (params.getStates() != null && !params.getStates().isEmpty()) {
+//            stateEnums = params.getStates().stream()
+//                    .map(EventState::valueOf)
+//                    .collect(Collectors.toList());
+//        }
+//
+//        Pageable pageable = PageRequest.of(from / size, size, Sort.by("id"));
+//        Page<Event> page = eventRepository.searchEventsAdmin(
+//                params.getUsers(),
+//                stateEnums,
+//                params.getCategories(),
+//                params.getRangeStart(),
+//                params.getRangeEnd(),
+//                pageable);
+//
+//        List<Event> events = page.getContent();
+//        List<Long> eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
+//        Map<Long, Long> confirmedRequestsMap = eventRepository.countConfirmedRequestsBatch(eventIds);
+//
+//        return events.stream()
+//                .map(event -> EventMapper.toEventFullDto(event, 0L, confirmedRequestsMap.getOrDefault(event.getId(), 0L)))
+//                .collect(Collectors.toList());
+//    }
+
     @Override
     @Transactional(readOnly = true)
     public List<EventFullDto> getEventsForAdmin(AdminEventSearchParams params) {
@@ -157,13 +190,20 @@ public class EventServiceImpl implements EventService {
         }
 
         Pageable pageable = PageRequest.of(from / size, size, Sort.by("id"));
-        Page<Event> page = eventRepository.searchEventsAdmin(
-                params.getUsers(),
-                stateEnums,
-                params.getCategories(),
-                params.getRangeStart(),
-                params.getRangeEnd(),
-                pageable);
+
+        Page<Event> page;
+        try {
+            page = eventRepository.searchEventsAdmin(
+                    params.getUsers(),
+                    stateEnums,
+                    params.getCategories(),
+                    params.getRangeStart(),
+                    params.getRangeEnd(),
+                    pageable);
+        } catch (Exception e) {
+            log.error("Error in searchEventsAdmin: ", e);
+            throw e;
+        }
 
         List<Event> events = page.getContent();
         List<Long> eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
@@ -173,59 +213,6 @@ public class EventServiceImpl implements EventService {
                 .map(event -> EventMapper.toEventFullDto(event, 0L, confirmedRequestsMap.getOrDefault(event.getId(), 0L)))
                 .collect(Collectors.toList());
     }
-
-
-//    @Override
-//    @Transactional
-//    public EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest request) {
-//        Event event = eventRepository.findById(eventId)
-//                .orElseThrow(() -> new NotFoundException("Событие с id=" + eventId + " не найдено"));
-//
-//        if (request.getStateAction() != null) {
-//            if (request.getStateAction().equals("PUBLISH_EVENT")) {
-//                if (event.getState() != EventState.PENDING) {
-//                    throw new ConflictException("Событие можно публиковать только в статусе PENDING");
-//                }
-//                if (event.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
-//                    throw new ConflictException("Дата начала события должна быть не ранее чем за час от текущего момента");
-//                }
-//                event.setState(EventState.PUBLISHED);
-//                event.setPublishedOn(LocalDateTime.now());
-//            } else if (request.getStateAction().equals("REJECT_EVENT")) {
-//                if (event.getState() == EventState.PUBLISHED) {
-//                    throw new ConflictException("Нельзя отклонить уже опубликованное событие");
-//                }
-//                event.setState(EventState.CANCELED);
-//            }
-//        }
-//
-//        if (request.getAnnotation() != null) event.setAnnotation(request.getAnnotation());
-//        if (request.getDescription() != null) event.setDescription(request.getDescription());
-//        if (request.getTitle() != null) event.setTitle(request.getTitle());
-//        if (request.getParticipantLimit() != null) event.setParticipantLimit(request.getParticipantLimit());
-//        if (request.getPaid() != null) event.setPaid(request.getPaid());
-//        if (request.getRequestModeration() != null) event.setRequestModeration(request.getRequestModeration());
-//
-//        if (request.getEventDate() != null) {
-//            if (request.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-//                throw new ConflictException("Дата события не может быть раньше чем через 2 часа от текущего момента");
-//            }
-//            event.setEventDate(request.getEventDate());
-//        }
-//
-//        if (request.getCategory() != null) {
-//            Category newCategory = categoryRepository.findById(request.getCategory())
-//                    .orElseThrow(() -> new NotFoundException("Категория с id=" + request.getCategory() + " не найдена"));
-//            event.setCategory(newCategory);
-//        }
-//
-//        if (request.getLocation() != null) event.setLocation(request.getLocation());
-//
-//        event = eventRepository.save(event);
-//        Long views = 0L;
-//        Long confirmed = eventRepository.countConfirmedRequests(eventId);
-//        return EventMapper.toEventFullDto(event, views, confirmed);
-//    }
 
     @Override
     @Transactional
