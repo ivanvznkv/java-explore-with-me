@@ -15,6 +15,7 @@ import ru.practicum.ewm.compilation.repository.CompilationRepository;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.mapper.EventMapper;
 import ru.practicum.ewm.event.model.Event;
+import ru.practicum.ewm.event.model.EventState;
 import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.exception.NotFoundException;
 
@@ -87,7 +88,11 @@ public class CompilationServiceImpl implements CompilationService {
         }
         return compilations.stream()
                 .map(comp -> {
+//                    Set<EventShortDto> eventDtos = comp.getEvents().stream()
+//                            .map(event -> EventMapper.toEventShortDto(event, 0L, 0L))
+//                            .collect(Collectors.toSet());
                     Set<EventShortDto> eventDtos = comp.getEvents().stream()
+                            .filter(event -> event.getState() == EventState.PUBLISHED)
                             .map(event -> EventMapper.toEventShortDto(event, 0L, 0L))
                             .collect(Collectors.toSet());
                     return CompilationMapper.toCompilationDto(comp, eventDtos);
@@ -95,12 +100,24 @@ public class CompilationServiceImpl implements CompilationService {
                 .collect(Collectors.toList());
     }
 
+//    @Override
+//    @Transactional(readOnly = true)
+//    public CompilationDto getCompilation(Long compId) {
+//        Compilation compilation = compilationRepository.findById(compId)
+//                .orElseThrow(() -> new NotFoundException("Подборка с id=" + compId + " не найдена"));
+//        Set<EventShortDto> eventDtos = compilation.getEvents().stream()
+//                .map(event -> EventMapper.toEventShortDto(event, 0L, 0L))
+//                .collect(Collectors.toSet());
+//        return CompilationMapper.toCompilationDto(compilation, eventDtos);
+//    }
+
     @Override
     @Transactional(readOnly = true)
     public CompilationDto getCompilation(Long compId) {
         Compilation compilation = compilationRepository.findById(compId)
                 .orElseThrow(() -> new NotFoundException("Подборка с id=" + compId + " не найдена"));
         Set<EventShortDto> eventDtos = compilation.getEvents().stream()
+                .filter(event -> event.getState() == EventState.PUBLISHED)
                 .map(event -> EventMapper.toEventShortDto(event, 0L, 0L))
                 .collect(Collectors.toSet());
         return CompilationMapper.toCompilationDto(compilation, eventDtos);
