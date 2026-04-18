@@ -65,7 +65,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     Long countConfirmedRequests(@Param("eventId") Long eventId);
 
     @Query("SELECT r.event.id, COUNT(r) FROM Request r WHERE r.event.id IN :eventIds AND r.status = 'CONFIRMED' GROUP BY r.event.id")
-    Map<Long, Long> countConfirmedRequestsBatch(@Param("eventIds") List<Long> eventIds);
+    List<Object[]> countConfirmedRequestsBatch(@Param("eventIds") List<Long> eventIds);
 
     @Query("SELECT e FROM Event e " +
             "LEFT JOIN FETCH e.category " +

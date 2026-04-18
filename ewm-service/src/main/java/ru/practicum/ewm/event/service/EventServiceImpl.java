@@ -207,7 +207,12 @@ public class EventServiceImpl implements EventService {
 
         List<Event> events = page.getContent();
         List<Long> eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
-        Map<Long, Long> confirmedRequestsMap = eventRepository.countConfirmedRequestsBatch(eventIds);
+        List<Object[]> batchResult = eventRepository.countConfirmedRequestsBatch(eventIds);
+        Map<Long, Long> confirmedRequestsMap = batchResult.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
 
         return events.stream()
                 .map(event -> EventMapper.toEventFullDto(event, 0L, confirmedRequestsMap.getOrDefault(event.getId(), 0L)))
@@ -381,6 +386,11 @@ public class EventServiceImpl implements EventService {
     private Map<Long, Long> getConfirmedRequestsMap(List<Event> events) {
         if (events.isEmpty()) return Map.of();
         List<Long> eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
-        return eventRepository.countConfirmedRequestsBatch(eventIds);
+        List<Object[]> batchResult = eventRepository.countConfirmedRequestsBatch(eventIds);
+        return batchResult.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
     }
 }
