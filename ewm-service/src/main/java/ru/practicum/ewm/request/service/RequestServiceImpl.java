@@ -95,6 +95,44 @@ public class RequestServiceImpl implements RequestService {
                 .collect(Collectors.toList());
     }
 
+//    @Override
+//    @Transactional
+//    public EventRequestStatusUpdateResult updateRequestStatus(Long userId, Long eventId,
+//                                                              EventRequestStatusUpdateRequest update) {
+//        Event event = eventRepository.findById(eventId)
+//                .orElseThrow(() -> new NotFoundException("Событие не найдено"));
+//        if (!event.getInitiator().getId().equals(userId)) {
+//            throw new ConflictException("Только владелец может изменять статус заявок");
+//        }
+//        if (event.getParticipantLimit() == 0 && !event.getRequestModeration()) {
+//            throw new ConflictException("Для этого события не требуется подтверждение заявок");
+//        }
+//
+//        List<Request> requests = requestRepository.findAllById(update.getRequestIds());
+//        long confirmedNow = requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
+//        int limit = event.getParticipantLimit();
+//        List<ParticipationRequestDto> confirmed = new ArrayList<>();
+//        List<ParticipationRequestDto> rejected = new ArrayList<>();
+//
+//        for (Request req : requests) {
+//            if (req.getStatus() != RequestStatus.PENDING) {
+//                throw new ConflictException("Статус можно изменить только у заявок в состоянии PENDING");
+//            }
+//            if (update.getStatus().equals("CONFIRMED")) {
+//                if (limit > 0 && confirmedNow >= limit) {
+//                    throw new ConflictException("Достигнут лимит участников");
+//                }
+//                req.setStatus(RequestStatus.CONFIRMED);
+//                confirmed.add(RequestMapper.toDto(req));
+//                confirmedNow++;
+//            } else if (update.getStatus().equals("REJECTED")) {
+//                req.setStatus(RequestStatus.REJECTED);
+//                rejected.add(RequestMapper.toDto(req));
+//            } else {
+//                throw new IllegalArgumentException("Некорректный статус");
+//            }
+//        }
+
     @Override
     @Transactional
     public EventRequestStatusUpdateResult updateRequestStatus(Long userId, Long eventId,
@@ -114,18 +152,19 @@ public class RequestServiceImpl implements RequestService {
         List<ParticipationRequestDto> confirmed = new ArrayList<>();
         List<ParticipationRequestDto> rejected = new ArrayList<>();
 
+        // 1. Обрабатываем переданные заявки
         for (Request req : requests) {
             if (req.getStatus() != RequestStatus.PENDING) {
                 throw new ConflictException("Статус можно изменить только у заявок в состоянии PENDING");
             }
-            if (update.getStatus().equals("CONFIRMED")) {
+            if ("CONFIRMED".equals(update.getStatus())) {
                 if (limit > 0 && confirmedNow >= limit) {
                     throw new ConflictException("Достигнут лимит участников");
                 }
                 req.setStatus(RequestStatus.CONFIRMED);
                 confirmed.add(RequestMapper.toDto(req));
                 confirmedNow++;
-            } else if (update.getStatus().equals("REJECTED")) {
+            } else if ("REJECTED".equals(update.getStatus())) {
                 req.setStatus(RequestStatus.REJECTED);
                 rejected.add(RequestMapper.toDto(req));
             } else {
@@ -133,6 +172,21 @@ public class RequestServiceImpl implements RequestService {
             }
         }
 
+        // 2. Если после подтверждения лимит исчерпан, автоматически отклоняем все оставшиеся PENDING заявки
+        if (limit > 0 && confirmedNow >= limit) {
+            List<Request> pendingRequests = requestRepository.findAllByEventIdAndStatus(eventId, RequestStatus.PENDING);
+            for (Request pending : pendingRequests) {
+                // Исключаем те, что уже обработаны в текущем запросе (чтобы не дублировать)
+                if (!requests.contains(pending)) {
+                    pending.setStatus(RequestStatus.REJECTED);
+                    rejected.add(RequestMapper.toDto(pending));
+                }
+            }
+            // Сохраняем автоматически отклонённые заявки (обработанные уже сохранены в контексте транзакции)
+            requestRepository.saveAll(pendingRequests);
+        }
+
+        // 3. Сохраняем изменения для переданных заявок (если они не были сохранены ранее — они в managed состоянии, но явно сохраним для надёжности
         requestRepository.saveAll(requests);
         return new EventRequestStatusUpdateResult(confirmed, rejected);
     }
