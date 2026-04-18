@@ -88,9 +88,6 @@ public class CompilationServiceImpl implements CompilationService {
         }
         return compilations.stream()
                 .map(comp -> {
-//                    Set<EventShortDto> eventDtos = comp.getEvents().stream()
-//                            .map(event -> EventMapper.toEventShortDto(event, 0L, 0L))
-//                            .collect(Collectors.toSet());
                     Set<EventShortDto> eventDtos = comp.getEvents().stream()
                             .filter(event -> event.getState() == EventState.PUBLISHED)
                             .map(event -> EventMapper.toEventShortDto(event, 0L, 0L))
@@ -99,17 +96,6 @@ public class CompilationServiceImpl implements CompilationService {
                 })
                 .collect(Collectors.toList());
     }
-
-//    @Override
-//    @Transactional(readOnly = true)
-//    public CompilationDto getCompilation(Long compId) {
-//        Compilation compilation = compilationRepository.findById(compId)
-//                .orElseThrow(() -> new NotFoundException("Подборка с id=" + compId + " не найдена"));
-//        Set<EventShortDto> eventDtos = compilation.getEvents().stream()
-//                .map(event -> EventMapper.toEventShortDto(event, 0L, 0L))
-//                .collect(Collectors.toSet());
-//        return CompilationMapper.toCompilationDto(compilation, eventDtos);
-//    }
 
     @Override
     @Transactional(readOnly = true)
