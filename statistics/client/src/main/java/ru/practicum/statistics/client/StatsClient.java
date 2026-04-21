@@ -1,5 +1,6 @@
 package ru.practicum.statistics.client;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
@@ -9,11 +10,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 import ru.practicum.statistics.dto.EndpointHit;
 import ru.practicum.statistics.dto.ViewStats;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -22,10 +22,13 @@ public class StatsClient {
 
     private final RestTemplate rest;
     private final String serverUrl;
+    private final String appName;
 
     public StatsClient(@Value("${stats-server.url:http://localhost:9090}") String serverUrl,
+                       @Value("${stats.app-name:ewm-main-service}") String appName,
                        RestTemplateBuilder builder) {
         this.serverUrl = serverUrl;
+        this.appName = appName;
         this.rest = builder.build();
     }
 
@@ -34,9 +37,18 @@ public class StatsClient {
         rest.exchange(serverUrl + "/hit", HttpMethod.POST, requestEntity, Void.class);
     }
 
+    public void sendHit(HttpServletRequest request) {
+        EndpointHit hit = new EndpointHit();
+        hit.setApp(appName);
+        hit.setUri(request.getRequestURI());
+        hit.setIp(request.getRemoteAddr());
+        hit.setTimestamp(LocalDateTime.now());
+        sendHit(hit);
+    }
+
     public List<ViewStats> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
-        String startStr = URLEncoder.encode(start.format(DATE_TIME_FORMATTER), StandardCharsets.UTF_8);
-        String endStr = URLEncoder.encode(end.format(DATE_TIME_FORMATTER), StandardCharsets.UTF_8);
+        String startStr = start.format(DATE_TIME_FORMATTER);
+        String endStr = end.format(DATE_TIME_FORMATTER);
 
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(serverUrl + "/stats")
                 .queryParam("start", startStr)
@@ -49,6 +61,7 @@ public class StatsClient {
         }
 
         ResponseEntity<ViewStats[]> response = rest.getForEntity(builder.build().toUriString(), ViewStats[].class);
-        return Arrays.asList(response.getBody());
+        ViewStats[] body = response.getBody();
+        return body != null ? Arrays.asList(body) : Collections.emptyList();
     }
 }
