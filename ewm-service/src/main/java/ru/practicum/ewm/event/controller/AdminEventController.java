@@ -35,14 +35,16 @@ public class AdminEventController {
         log.info("Admin getEvents called with users={}, states={}, categories={}, rangeStart={}, rangeEnd={}, from={}, size={}",
                 users, states, categories, rangeStart, rangeEnd, from, size);
 
-        AdminEventSearchParams params = new AdminEventSearchParams();
-        params.setUsers(users);
-        params.setStates(states);
-        params.setCategories(categories);
-        params.setRangeStart(rangeStart);
-        params.setRangeEnd(rangeEnd);
-        params.setFrom(from);
-        params.setSize(size);
+        AdminEventSearchParams params = AdminEventSearchParams.builder()
+                .users(users)
+                .states(states)
+                .categories(categories)
+                .rangeStart(rangeStart)
+                .rangeEnd(rangeEnd)
+                .from(from)
+                .size(size)
+                .build();
+
         return eventService.getEventsForAdmin(params);
     }
 

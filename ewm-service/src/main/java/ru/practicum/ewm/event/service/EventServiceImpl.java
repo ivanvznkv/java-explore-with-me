@@ -130,19 +130,13 @@ public class EventServiceImpl implements EventService {
 
         Pageable pageable = PageRequest.of(from / size, size, Sort.by("id"));
 
-        Page<Event> page;
-        try {
-            page = eventRepository.searchEventsAdmin(
-                    params.getUsers(),
-                    stateEnums,
-                    params.getCategories(),
-                    params.getRangeStart(),
-                    params.getRangeEnd(),
-                    pageable);
-        } catch (Exception e) {
-            log.error("Error in searchEventsAdmin: ", e);
-            throw e;
-        }
+        Page<Event> page = eventRepository.searchEventsAdmin(
+                params.getUsers(),
+                stateEnums,
+                params.getCategories(),
+                params.getRangeStart(),
+                params.getRangeEnd(),
+                pageable);
 
         List<Event> events = page.getContent();
         List<Long> eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
