@@ -39,6 +39,10 @@ public class EventMapper {
     }
 
     public static EventShortDto toEventShortDto(Event event, Long views, Long confirmedRequests) {
+        return toEventShortDto(event, views, confirmedRequests, 0L);
+    }
+
+    public static EventShortDto toEventShortDto(Event event, Long views, Long confirmedRequests, Long commentsCount) {
         EventShortDto dto = new EventShortDto();
         dto.setId(event.getId());
         dto.setAnnotation(event.getAnnotation());
@@ -49,10 +53,15 @@ public class EventMapper {
         dto.setTitle(event.getTitle());
         dto.setViews(views);
         dto.setConfirmedRequests(confirmedRequests);
+        dto.setCommentsCount(commentsCount);
         return dto;
     }
 
     public static EventFullDto toEventFullDto(Event event, Long views, Long confirmedRequests) {
+        return toEventFullDto(event, views, confirmedRequests, 0L);
+    }
+
+    public static EventFullDto toEventFullDto(Event event, Long views, Long confirmedRequests, Long commentsCount) {
         EventFullDto dto = new EventFullDto();
         dto.setId(event.getId());
         dto.setAnnotation(event.getAnnotation());
@@ -70,6 +79,7 @@ public class EventMapper {
         dto.setTitle(event.getTitle());
         dto.setViews(views);
         dto.setConfirmedRequests(confirmedRequests);
+        dto.setCommentsCount(commentsCount);
         return dto;
     }
 }

@@ -36,4 +36,5 @@ public class EventFullDto {
     private String state;
     private String title;
     private Long views;
+    private Long commentsCount;
 }

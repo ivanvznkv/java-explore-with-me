@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.category.model.Category;
 import ru.practicum.ewm.category.repository.CategoryRepository;
+import ru.practicum.ewm.comment.model.CommentStatus;
+import ru.practicum.ewm.comment.repository.CommentRepository;
 import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.mapper.EventMapper;
 import ru.practicum.ewm.event.model.Event;
@@ -36,6 +38,7 @@ public class EventServiceImpl implements EventService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final StatsClient statsClient;
+    private final CommentRepository commentRepository;
 
     @Override
     @Transactional
@@ -51,7 +54,7 @@ public class EventServiceImpl implements EventService {
         event.setCreatedOn(LocalDateTime.now());
         event.setState(EventState.PENDING);
         event = eventRepository.save(event);
-        return EventMapper.toEventFullDto(event, 0L, 0L);
+        return EventMapper.toEventFullDto(event, 0L, 0L, 0L);
     }
 
     @Override
@@ -60,8 +63,12 @@ public class EventServiceImpl implements EventService {
         int page = from / size;
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by("id"));
         List<Event> events = eventRepository.findAllByInitiatorIdWithDetails(userId, pageRequest);
+        Map<Long, Long> commentsCountMap = getCommentsCountMap(events);
         return events.stream()
-                .map(event -> EventMapper.toEventShortDto(event, 0L, 0L))
+                .map(event -> {
+                    Long commentsCount = commentsCountMap.getOrDefault(event.getId(), 0L);
+                    return EventMapper.toEventShortDto(event, 0L, 0L, commentsCount);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -73,7 +80,8 @@ public class EventServiceImpl implements EventService {
         if (!event.getInitiator().getId().equals(userId)) {
             throw new NotFoundException("Событие не принадлежит пользователю");
         }
-        return EventMapper.toEventFullDto(event, 0L, 0L);
+        Long commentsCount = commentRepository.countByEventIdAndStatus(eventId, CommentStatus.PUBLISHED);
+        return EventMapper.toEventFullDto(event, 0L, 0L, commentsCount);
     }
 
     @Override
@@ -112,7 +120,7 @@ public class EventServiceImpl implements EventService {
         }
 
         event = eventRepository.save(event);
-        return EventMapper.toEventFullDto(event, 0L, 0L);
+        return EventMapper.toEventFullDto(event, 0L, 0L, 0L);
     }
 
     @Override
@@ -146,9 +154,13 @@ public class EventServiceImpl implements EventService {
                         row -> (Long) row[0],
                         row -> (Long) row[1]
                 ));
+        Map<Long, Long> commentsCountMap = getCommentsCountMap(events);
 
         return events.stream()
-                .map(event -> EventMapper.toEventFullDto(event, 0L, confirmedRequestsMap.getOrDefault(event.getId(), 0L)))
+                .map(event -> EventMapper.toEventFullDto(event,
+                        0L,
+                        confirmedRequestsMap.getOrDefault(event.getId(), 0L),
+                        commentsCountMap.getOrDefault(event.getId(), 0L)))
                 .collect(Collectors.toList());
     }
 
@@ -201,7 +213,7 @@ public class EventServiceImpl implements EventService {
         event = eventRepository.save(event);
         Long views = 0L;
         Long confirmed = eventRepository.countConfirmedRequests(eventId);
-        return EventMapper.toEventFullDto(event, views, confirmed);
+        return EventMapper.toEventFullDto(event, views, confirmed, 0L);
     }
 
     @Override
@@ -227,6 +239,7 @@ public class EventServiceImpl implements EventService {
 
         List<Event> events = page.getContent();
         Map<Long, Long> confirmedRequestsMap = getConfirmedRequestsMap(events);
+        Map<Long, Long> commentsCountMap = getCommentsCountMap(events);
 
         if (params.getOnlyAvailable()) {
             events = events.stream()
@@ -243,7 +256,8 @@ public class EventServiceImpl implements EventService {
         List<EventShortDto> result = events.stream()
                 .map(event -> EventMapper.toEventShortDto(event,
                         viewsMap.getOrDefault(event.getId(), 0L),
-                        confirmedRequestsMap.getOrDefault(event.getId(), 0L)))
+                        confirmedRequestsMap.getOrDefault(event.getId(), 0L),
+                        commentsCountMap.getOrDefault(event.getId(), 0L)))
                 .collect(Collectors.toList());
 
         SortType sort = params.getSort();
@@ -274,7 +288,8 @@ public class EventServiceImpl implements EventService {
         Map<Long, Long> viewsMap = getViewsMap(List.of(event));
         Long views = viewsMap.getOrDefault(eventId, 0L);
         Long confirmed = eventRepository.countConfirmedRequests(eventId);
-        return EventMapper.toEventFullDto(event, views, confirmed);
+        Long commentsCount = commentRepository.countByEventIdAndStatus(eventId, CommentStatus.PUBLISHED);
+        return EventMapper.toEventFullDto(event, views, confirmed, commentsCount);
     }
 
     private Map<Long, Long> getViewsMap(List<Event> events) {
@@ -311,6 +326,17 @@ public class EventServiceImpl implements EventService {
         List<Long> eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
         List<Object[]> batchResult = eventRepository.countConfirmedRequestsBatch(eventIds);
         return batchResult.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
+    }
+
+    private Map<Long, Long> getCommentsCountMap(List<Event> events) {
+        if (events.isEmpty()) return Map.of();
+        List<Long> eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
+        List<Object[]> results = commentRepository.countPublishedByEventIds(eventIds);
+        return results.stream()
                 .collect(Collectors.toMap(
                         row -> (Long) row[0],
                         row -> (Long) row[1]
