@@ -43,7 +43,6 @@ class CommentServiceImplTest {
     private User user;
     private Event event;
     private Comment comment;
-    private NewCommentDto newCommentDto;
 
     @BeforeEach
     void setUp() {
@@ -62,18 +61,19 @@ class CommentServiceImplTest {
         comment.setEvent(event);
         comment.setCreatedOn(LocalDateTime.now());
         comment.setStatus(CommentStatus.PUBLISHED);
-
-        newCommentDto = new NewCommentDto();
-        newCommentDto.setText("Новый комментарий");
     }
 
     @Test
     void createComment_ShouldReturnCommentDto() {
+        CommentRequestDto requestDto = new CommentRequestDto();
+        requestDto.setText("Новый комментарий");
+        requestDto.setEventId(1L);
+
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
         when(commentRepository.save(any(Comment.class))).thenReturn(comment);
 
-        CommentDto result = commentService.createComment(1L, 1L, newCommentDto);
+        CommentDto result = commentService.createComment(1L, requestDto);
 
         assertNotNull(result);
         assertEquals(1L, result.getId());
@@ -83,22 +83,27 @@ class CommentServiceImplTest {
     @Test
     void createComment_WhenEventNotPublished_ShouldThrowConflict() {
         event.setState(EventState.PENDING);
+        CommentRequestDto requestDto = new CommentRequestDto();
+        requestDto.setText("Комментарий");
+        requestDto.setEventId(1L);
+
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
 
         assertThrows(ConflictException.class,
-                () -> commentService.createComment(1L, 1L, newCommentDto));
+                () -> commentService.createComment(1L, requestDto));
     }
 
     @Test
     void updateComment_ShouldUpdateTextAndSetEditedOn() {
-        UpdateCommentRequest request = new UpdateCommentRequest();
-        request.setText("Обновлённый текст");
+        CommentRequestDto requestDto = new CommentRequestDto();
+        requestDto.setText("Обновлённый текст");
+        requestDto.setCommentId(1L);
 
         when(commentRepository.findById(1L)).thenReturn(Optional.of(comment));
         when(commentRepository.save(any(Comment.class))).thenReturn(comment);
 
-        CommentDto result = commentService.updateComment(1L, 1L, request);
+        CommentDto result = commentService.updateComment(1L, requestDto);
 
         assertEquals("Обновлённый текст", comment.getText());
         assertNotNull(comment.getEditedOn());
@@ -107,12 +112,14 @@ class CommentServiceImplTest {
 
     @Test
     void updateComment_WhenUserNotAuthor_ShouldThrowConflict() {
-        UpdateCommentRequest request = new UpdateCommentRequest();
-        request.setText("Обновлённый текст");
+        CommentRequestDto requestDto = new CommentRequestDto();
+        requestDto.setText("Обновлённый текст");
+        requestDto.setCommentId(1L);
+
         when(commentRepository.findById(1L)).thenReturn(Optional.of(comment));
 
         assertThrows(ConflictException.class,
-                () -> commentService.updateComment(2L, 1L, request));
+                () -> commentService.updateComment(2L, requestDto));
     }
 
     @Test

@@ -8,8 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.comment.dto.CommentDto;
-import ru.practicum.ewm.comment.dto.NewCommentDto;
-import ru.practicum.ewm.comment.dto.UpdateCommentRequest;
+import ru.practicum.ewm.comment.dto.CommentRequestDto;
 import ru.practicum.ewm.comment.service.CommentService;
 
 import java.util.List;
@@ -21,19 +20,17 @@ import java.util.List;
 public class PrivateCommentController {
     private final CommentService commentService;
 
-    @PostMapping("/events/{eventId}/comments")
+    @PostMapping("/comments")
     @ResponseStatus(HttpStatus.CREATED)
     public CommentDto createComment(@PathVariable Long userId,
-                                    @PathVariable Long eventId,
-                                    @Valid @RequestBody NewCommentDto dto) {
-        return commentService.createComment(userId, eventId, dto);
+                                    @Valid @RequestBody CommentRequestDto dto) {
+        return commentService.createComment(userId, dto);
     }
 
-    @PatchMapping("/comments/{commentId}")
+    @PatchMapping("/comments")
     public CommentDto updateComment(@PathVariable Long userId,
-                                    @PathVariable Long commentId,
-                                    @Valid @RequestBody UpdateCommentRequest request) {
-        return commentService.updateComment(userId, commentId, request);
+                                    @Valid @RequestBody CommentRequestDto dto) {
+        return commentService.updateComment(userId, dto);
     }
 
     @DeleteMapping("/comments/{commentId}")

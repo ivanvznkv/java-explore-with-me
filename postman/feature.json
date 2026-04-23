@@ -217,12 +217,12 @@
         "header": [{"key": "Content-Type", "value": "application/json"}],
         "body": {
           "mode": "raw",
-          "raw": "{\n    \"text\": \"Отличное событие! Жду с нетерпением.\"\n}"
+          "raw": "{\n    \"text\": \"Отличное событие! Жду с нетерпением.\",\n    \"eventId\": {{eventId}}\n}"
         },
         "url": {
-          "raw": "{{baseUrl}}/users/{{userId}}/events/{{eventId}}/comments",
+          "raw": "{{baseUrl}}/users/{{userId}}/comments",
           "host": ["{{baseUrl}}"],
-          "path": ["users", "{{userId}}", "events", "{{eventId}}", "comments"]
+          "path": ["users", "{{userId}}", "comments"]
         }
       }
     },
@@ -246,12 +246,12 @@
         "header": [{"key": "Content-Type", "value": "application/json"}],
         "body": {
           "mode": "raw",
-          "raw": "{\n    \"text\": \"Комментарий к неопубликованному событию\"\n}"
+          "raw": "{\n    \"text\": \"Комментарий к неопубликованному событию\",\n    \"eventId\": {{pendingEventId}}\n}"
         },
         "url": {
-          "raw": "{{baseUrl}}/users/{{userId}}/events/{{pendingEventId}}/comments",
+          "raw": "{{baseUrl}}/users/{{userId}}/comments",
           "host": ["{{baseUrl}}"],
-          "path": ["users", "{{userId}}", "events", "{{pendingEventId}}", "comments"]
+          "path": ["users", "{{userId}}", "comments"]
         }
       }
     },
@@ -313,12 +313,12 @@
         "header": [{"key": "Content-Type", "value": "application/json"}],
         "body": {
           "mode": "raw",
-          "raw": "{\n    \"text\": \"Обновлённый текст комментария\"\n}"
+          "raw": "{\n    \"text\": \"Обновлённый текст комментария\",\n    \"commentId\": {{commentId}}\n}"
         },
         "url": {
-          "raw": "{{baseUrl}}/users/{{userId}}/comments/{{commentId}}",
+          "raw": "{{baseUrl}}/users/{{userId}}/comments",
           "host": ["{{baseUrl}}"],
-          "path": ["users", "{{userId}}", "comments", "{{commentId}}"]
+          "path": ["users", "{{userId}}", "comments"]
         }
       }
     },
@@ -512,9 +512,9 @@
             "exec": [
               "const createRequest = {",
               "    method: 'POST',",
-              "    url: pm.collectionVariables.get('baseUrl') + '/users/' + pm.collectionVariables.get('userId') + '/events/' + pm.collectionVariables.get('eventId') + '/comments',",
+              "    url: pm.collectionVariables.get('baseUrl') + '/users/' + pm.collectionVariables.get('userId') + '/comments',",
               "    header: {'Content-Type': 'application/json'},",
-              "    body: { mode: 'raw', raw: JSON.stringify({text: 'Временный комментарий'}) }",
+              "    body: { mode: 'raw', raw: JSON.stringify({text: 'Временный комментарий', eventId: Number(pm.collectionVariables.get('eventId'))}) }",
               "};",
               "",
               "pm.sendRequest(createRequest, (err, res) => {",

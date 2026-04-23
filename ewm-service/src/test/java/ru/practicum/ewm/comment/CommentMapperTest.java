@@ -3,7 +3,6 @@ package ru.practicum.ewm.comment;
 import org.junit.jupiter.api.Test;
 import ru.practicum.ewm.category.model.Category;
 import ru.practicum.ewm.comment.dto.CommentDto;
-import ru.practicum.ewm.comment.dto.NewCommentDto;
 import ru.practicum.ewm.comment.mapper.CommentMapper;
 import ru.practicum.ewm.comment.model.Comment;
 import ru.practicum.ewm.comment.model.CommentStatus;
@@ -20,8 +19,7 @@ class CommentMapperTest {
 
     @Test
     void toComment_ShouldMapCorrectly() {
-        NewCommentDto dto = new NewCommentDto();
-        dto.setText("Тестовый комментарий");
+        String text = "Тестовый комментарий";
 
         User author = new User(1L, "test", "test@example.com");
         Category category = new Category(1L, "Концерты");
@@ -40,9 +38,9 @@ class CommentMapperTest {
         event.setCreatedOn(LocalDateTime.now());
         event.setState(EventState.PUBLISHED);
 
-        Comment comment = CommentMapper.toComment(dto, author, event);
+        Comment comment = CommentMapper.toComment(text, author, event);
 
-        assertEquals(dto.getText(), comment.getText());
+        assertEquals(text, comment.getText());
         assertEquals(author, comment.getAuthor());
         assertEquals(event, comment.getEvent());
         assertEquals(CommentStatus.PUBLISHED, comment.getStatus());

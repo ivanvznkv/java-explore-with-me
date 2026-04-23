@@ -5,9 +5,9 @@ import ru.practicum.ewm.comment.dto.*;
 import java.util.List;
 
 public interface CommentService {
-    CommentDto createComment(Long userId, Long eventId, NewCommentDto dto);
+    CommentDto createComment(Long userId, CommentRequestDto dto);
 
-    CommentDto updateComment(Long userId, Long commentId, UpdateCommentRequest request);
+    CommentDto updateComment(Long userId, CommentRequestDto dto);
 
     void deleteCommentByUser(Long userId, Long commentId);
 

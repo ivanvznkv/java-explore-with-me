@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import ru.practicum.ewm.comment.model.Comment;
 import ru.practicum.ewm.comment.model.CommentStatus;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
@@ -32,4 +33,12 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Override
     @EntityGraph(attributePaths = {"author", "event"})
     Optional<Comment> findById(Long id);
+
+    long countByEventIdAndStatus(Long eventId, CommentStatus status);
+
+    @Query("SELECT c.event.id, COUNT(c) " +
+            "FROM Comment c " +
+            "WHERE c.event.id IN :eventIds AND c.status = 'PUBLISHED' " +
+            "GROUP BY c.event.id")
+    List<Object[]> countPublishedByEventIds(@Param("eventIds") List<Long> eventIds);
 }

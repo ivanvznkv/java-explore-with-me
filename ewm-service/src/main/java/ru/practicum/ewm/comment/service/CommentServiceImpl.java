@@ -33,26 +33,34 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public CommentDto createComment(Long userId, Long eventId, NewCommentDto dto) {
+    public CommentDto createComment(Long userId, CommentRequestDto dto) {
+        if (dto.getEventId() == null) {
+            throw new IllegalArgumentException("Для создания комментария необходимо указать eventId");
+        }
+
         User author = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Событие с id=" + eventId + " не найдено"));
+        Event event = eventRepository.findById(dto.getEventId())
+                .orElseThrow(() -> new NotFoundException("Событие с id=" + dto.getEventId() + " не найдено"));
 
         if (event.getState() != EventState.PUBLISHED) {
             throw new ConflictException("Комментировать можно только опубликованные события");
         }
 
-        Comment comment = CommentMapper.toComment(dto, author, event);
+        Comment comment = CommentMapper.toComment(dto.getText(), author, event);
         comment = commentRepository.save(comment);
         return CommentMapper.toCommentDto(comment);
     }
 
     @Override
     @Transactional
-    public CommentDto updateComment(Long userId, Long commentId, UpdateCommentRequest request) {
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new NotFoundException("Комментарий с id=" + commentId + " не найден"));
+    public CommentDto updateComment(Long userId, CommentRequestDto dto) {
+        if (dto.getCommentId() == null) {
+            throw new IllegalArgumentException("Для обновления комментария необходимо указать commentId");
+        }
+
+        Comment comment = commentRepository.findById(dto.getCommentId())
+                .orElseThrow(() -> new NotFoundException("Комментарий с id=" + dto.getCommentId() + " не найден"));
 
         if (!comment.getAuthor().getId().equals(userId)) {
             throw new ConflictException("Редактировать можно только свои комментарии");
@@ -61,7 +69,7 @@ public class CommentServiceImpl implements CommentService {
             throw new ConflictException("Нельзя редактировать заблокированный комментарий");
         }
 
-        comment.setText(request.getText());
+        comment.setText(dto.getText());
         comment.setEditedOn(LocalDateTime.now());
         comment = commentRepository.save(comment);
         return CommentMapper.toCommentDto(comment);
@@ -113,11 +121,8 @@ public class CommentServiceImpl implements CommentService {
     public List<CommentDto> searchCommentsAdmin(Long eventId, Long authorId, String statusStr, int from, int size) {
         CommentStatus status = null;
         if (statusStr != null) {
-            try {
-                status = CommentStatus.valueOf(statusStr.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Некорректный статус: " + statusStr);
-            }
+            status = CommentStatus.from(statusStr)
+                    .orElseThrow(() -> new IllegalArgumentException("Некорректный статус: " + statusStr));
         }
 
         int page = from / size;
